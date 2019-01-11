@@ -7,12 +7,14 @@ use TAO\Fields\Model;
 interface Indexer
 {
 	/**
-	 * @param Model $model
+	 * @param Model $item
 	 */
-	public function update($model);
+	public function update($item);
 
 	/**
 	 * @param Model $model
 	 */
 	public function delete($model);
+
+	public function clear();
 }

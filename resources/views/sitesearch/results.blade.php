@@ -24,6 +24,9 @@
 					@endforeach
 				@endif
 			</div>
+			<div class="b-search-page__pager">
+				@include ('pager ~ site')
+			</div>
 		</section>
 	</div>
 @endsection

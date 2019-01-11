@@ -2,7 +2,6 @@
 
 namespace Techart\SiteSearch;
 
-use Techart\SiteSearch\Contract\Engine;
 use TAO\Fields\Model;
 
 class ModelObserver

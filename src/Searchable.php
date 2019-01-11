@@ -4,12 +4,13 @@ namespace Techart\SiteSearch;
 
 use Illuminate\Database\Eloquent\Collection;
 use TAO\ORM\Model;
-use Techart\SiteSearch\Facade\SiteSearch;
 use TAO\Fields\Field;
 
 trait Searchable
 {
 	protected $searchableContentSeparator = ' ';
+	protected $searchableItems;
+	protected $searchableItemsKeys;
 
 	public static function bootSearchable()
 	{
@@ -21,7 +22,7 @@ trait Searchable
 	 *
 	 * @return string
 	 */
-	public function searchableUrl()
+	public function getSearchableUrl()
 	{
 		return $this->url();
 	}
@@ -31,7 +32,7 @@ trait Searchable
 	 *
 	 * @return string
 	 */
-	public function searchableTitle()
+	public function getSearchableTitle()
 	{
 		return $this->title();
 	}
@@ -41,10 +42,10 @@ trait Searchable
 	 *
 	 * @return string
 	 */
-	public function searchableContent()
+	public function getSearchableContent()
 	{
 		$content = '';
-		foreach ($this->searchableFields() as $field) {
+		foreach ($this->getSearchableFields() as $field) {
 			$content .= $field->value() . $this->searchableContentSeparator;
 		}
 		return $this->prepareSearchableContent(rtrim($content, $this->searchableContentSeparator));
@@ -56,7 +57,7 @@ trait Searchable
 	 *
 	 * @return Field[]
 	 */
-	public function searchableFields()
+	public function getSearchableFields()
 	{
 		$fields = [];
 		foreach ($this->fields() as $fieldName => $fieldParams) {
@@ -73,7 +74,7 @@ trait Searchable
 	 *
 	 * @return string
 	 */
-	public function searchableExtraData()
+	public function getSearchableExtraData()
 	{
 		return '';
 	}
@@ -89,7 +90,6 @@ trait Searchable
 	{
 		$content = preg_replace('{&[a-z0-9#]+;}i', ' ', $content);
 		$content = preg_replace('{<noindex>.+?</noindex>}ism', '', $content);
-		$content = preg_replace('{<ssnoindex>.+?</ssnoindex>}ism', '', $content);
 		return strip_tags($content);
 	}
 
@@ -99,22 +99,31 @@ trait Searchable
 	 */
 	public function updateSearchIndex()
 	{
+		$this->deleteFromSearchIndex();
 		/** @var Model $this */
 		if ($this->isDatatype()) {
-			foreach ($this->itemsForSearch() as $item) {
+			foreach ($this->getSearchableItems(false) as $item) {
 				$item->updateSearchIndex();
 			}
 		} else {
-			$this->searchEngine()->indexer()->update($this);
+			$this->getSearchEngine()->indexer()->update($this);
 		}
 	}
 
 	/**
-	 * Удаляет текущую запись из поискового индекса.
+	 * Если экземлпяр является дататипом, то удаляет из индекса все его записи, доступные для этого.
+	 * Если экзмепляр - запись, то удаляет только эту запись.
 	 */
 	public function deleteFromSearchIndex()
 	{
-		$this->searchEngine()->indexer()->delete($this);
+		/** @var Model $this */
+		if ($this->isDatatype()) {
+			foreach ($this->get() as $item) {
+				$item->deleteFromSearchIndex();
+			}
+		} else {
+			$this->getSearchEngine()->indexer()->delete($this);
+		}
 	}
 
 	/**
@@ -122,19 +131,45 @@ trait Searchable
 	 *
 	 * @return Contract\Engine
 	 */
-	protected function searchEngine()
+	protected function getSearchEngine()
 	{
 		return app(\Techart\SiteSearch\SiteSearch::class)->engine();
 	}
 
 	/**
-	 * Возварщает список записей текущего типа данных, доступных для поиска.
+	 * Возвращает список записей текущего типа данных, доступных для поиска.
 	 *
+	 * @param bool $cacheEnabled
 	 * @return Collection
 	 */
-	protected function itemsForSearch()
+	protected function getSearchableItems($cacheEnabled = true)
 	{
-		return $this->getAccessibleItems()->get();
+		if ($cacheEnabled && !is_null($this->searchableItems)) {
+			return $this->searchableItems;
+		} else {
+			$items = $this->getAccessibleItems()->get();
+			return $cacheEnabled ? ($this->searchableItems = $items) : $items;
+		}
+	}
+
+	protected function getSearchableItemKeys($cacheEnabled = true)
+	{
+		if ($cacheEnabled && !is_null($this->searchableItemsKeys)) {
+			return $this->searchableItemsKeys;
+		} else {
+			$keys = $this->getAccessibleItems()->pluck($this->getKeyName());
+			return $cacheEnabled ? ($this->searchableItemsKeys = $keys) : $keys;
+		}
+	}
+
+	/**
+	 * Проверяет доступна ли запись для поиска
+	 *
+	 * @return bool
+	 */
+	public function isSearchableItem()
+	{
+		return $this->getDatatypeObject()->getSearchableItemKeys()->contains($this->getKey());
 	}
 
 }

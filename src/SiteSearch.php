@@ -24,7 +24,13 @@ class SiteSearch
 
 	public function engineManager()
 	{
-		return app(EngineManager::class);
+		return new EngineManager(app());
+//		return app(EngineManager::class);
+	}
+
+	public function clearIndex()
+	{
+		$this->engine()->indexer()->clear();
 	}
 
 	public function view()
@@ -36,11 +42,23 @@ class SiteSearch
 	}
 
 	/**
+	 * @param Model $model
+	 * @return bool
+	 */
+	public function isSearchableDatatype($model)
+	{
+		if (!$model->isDatatype()) {
+			return $this->isSearchableItem($model);
+		}
+		return trait_used($model, Searchable::class);
+	}
+
+	/**
 	 * @param Model|Searchable $model
 	 * @return bool
 	 */
-	public function isSearchableModel($model)
+	public function isSearchableItem($model)
 	{
-		return trait_used($model, Searchable::class);
+		return $this->isSearchableDatatype($model->getDatatypeObject()) && $model->isSearchableItem();
 	}
 }

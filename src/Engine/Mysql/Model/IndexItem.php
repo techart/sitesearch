@@ -18,6 +18,8 @@ class IndexItem extends Model implements MySqlIndexItem
 {
 	protected $table = 'search_site_index';
 
+	public $adminMenuSection = false;
+
 	/**
 	 * @param Builder $query
 	 * @param Model $model
@@ -101,6 +103,4 @@ class IndexItem extends Model implements MySqlIndexItem
 	{
 		return Collection::make(['title', 'content']);
 	}
-
-
 }
