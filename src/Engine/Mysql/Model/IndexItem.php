@@ -28,7 +28,7 @@ class IndexItem extends Model implements MySqlIndexItem
 	 */
 	public function scopeByModel($query, $model)
 	{
-		return $query->datatype($model->getDatatype())->where('model_id', $model->getKey());
+		return $query->datatype($model->getDatatype())->where('model_key', $model->getKey());
 	}
 
 	public function scopeDatatype($query, $datatypeCode)
@@ -57,9 +57,9 @@ class IndexItem extends Model implements MySqlIndexItem
 			],
 			'datatype_code' => [
 				'label' => 'Дататип',
-				'type' => 'string(50) index(datatype_code, model_id)',
+				'type' => 'string(50) index(datatype_code, model_key)',
 			],
-			'model_id' => [
+			'model_key' => [
 				'label' => 'Дататип',
 				'type' => 'integer',
 			],
@@ -83,8 +83,8 @@ class IndexItem extends Model implements MySqlIndexItem
 
 	public function model()
 	{
-		if ($this->datatype_code() && $this->model_id()) {
-			$model = \TAO::datatype($this->datatype_code())->find($this->model_id());
+		if ($this->datatype_code() && $this->model_key()) {
+			$model = \TAO::datatype($this->datatype_code())->find($this->model_key());
 		}
 		return $model;
 	}
@@ -94,9 +94,9 @@ class IndexItem extends Model implements MySqlIndexItem
 		return $this->field('datatype_code')->value();
 	}
 
-	public function model_id()
+	public function model_key()
 	{
-		return $this->field('model_id')->value();
+		return $this->field('model_key')->value();
 	}
 
 	public function searchableFields()

@@ -19,7 +19,7 @@ class Controller extends \TAO\Controller
 				$resultItems = $result->limit($perPage)->offset(($page - 1) * $perPage)->get();
 			}
 
-			if ($resultItems->count() === 0) {
+			if ($resultTotalCount === 0) {
 				if ($page > 1) {
 					return $this->pageNotFound();
 				} else {
@@ -30,7 +30,7 @@ class Controller extends \TAO\Controller
 			$message = trans('sitesearch::messages.empty_query');
 		}
 
-		return view('sitesearch.results', [
+		return view('sitesearch::results', [
 			'resultItems' => $resultItems,
 			'message' => $message,
 			'numpages' => $numPages,

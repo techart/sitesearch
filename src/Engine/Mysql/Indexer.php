@@ -76,7 +76,7 @@ class Indexer implements \Techart\SiteSearch\Contract\Indexer
 	protected function assignModelToIndexItem($model, $indexItem)
 	{
 		$indexItem->field('datatype_code')->set($model->getDatatype());
-		$indexItem->field('model_id')->set($model->getKey());
+		$indexItem->field('model_key')->set($model->getKey());
 
 		$indexItem->field('title')->set($model->getSearchableTitle());
 		$indexItem->field('url')->set($model->getSearchableUrl());
