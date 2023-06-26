@@ -1,47 +1,51 @@
 {
-  "name": "techart/sitesearch",
-    "description": "Site search for tao3.",
-	"version": "0.1.0",
-    "license": "Apache-2.0",
-    "authors": [
-        {
-            "name": "Selin Nikolay",
-            "email": "selin@techart.ru"
-        }
-    ],
-    "type": "project",
-    "require": {
+	"name": "techart/sitesearch",
+	"description": "Site search for tao3.",
+	"version": "0.2.0",
+	"license": "Apache-2.0",
+	"authors": [
+		{
+			"name": "Selin Nikolay",
+			"email": "selin@techart.ru"
+		},
+		{
+			"name": "Zhmurin Andrey",
+			"email": "zhmurin@techart.ru"
+		}
+	],
+	"type": "project",
+	"require": {
 		"php": ">=7.2",
-        "techart/tao3": ">=3.0",
-        "wamania/php-stemmer": "^1.2"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "~6.0",
-        "orchestra/testbench": "~3.5"
-    },
+		"techart/tao3": ">=3.0",
+		"wamania/php-stemmer": "^1.2"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "~6.0",
+		"orchestra/testbench": "~3.5"
+	},
 	"autoload": {
-        "psr-4": {
-            "Techart\\SiteSearch\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Techart\\SiteSearchTests\\": "tests/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "Techart\\SiteSearch\\SiteSearchProvider"
-            ]
-        }
-    },
-    "scripts": {
-        "post-package-install": [
-            "php artisan vendor:publish --provider='Techart\\SiteSearch\\SiteSearchProvider'"
-        ],
-        "post-package-update": [
-            "php artisan vendor:publish --provider='Techart\\SiteSearch\\SiteSearchProvider'"
-        ]
-    }
+		"psr-4": {
+			"Techart\\SiteSearch\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Techart\\SiteSearchTests\\": "tests/"
+		}
+	},
+	"extra": {
+		"laravel": {
+			"providers": [
+				"Techart\\SiteSearch\\SiteSearchProvider"
+			]
+		}
+	},
+	"scripts": {
+		"post-package-install": [
+			"php artisan vendor:publish --provider='Techart\\SiteSearch\\SiteSearchProvider'"
+		],
+		"post-package-update": [
+			"php artisan vendor:publish --provider='Techart\\SiteSearch\\SiteSearchProvider'"
+		]
+	}
 }

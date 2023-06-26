@@ -1,4 +1,10 @@
 <?php
+/**
+ * Настройка маршрутов пакета поиска "по умолчанию"
+ *
+ * Вы можете переопределять эти маршруты своими значениям
+ * в файле routes/web.php вашего проекта
+ */
 
 Route::get(
 	config('sitesearch.result_url'), '\\Techart\\SiteSearch\\Controller@index'

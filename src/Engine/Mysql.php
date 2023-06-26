@@ -8,6 +8,11 @@ use Techart\SiteSearch\Engine\Mysql\Model\IndexItem;
 use Techart\SiteSearch\Engine\Mysql\QueryBuilder;
 use TAO\Fields\Model;
 
+/**
+ * Class Mysql
+ *
+ * @package Techart\SiteSearch\Engine
+ */
 class Mysql implements Engine
 {
 	/**
@@ -39,9 +44,9 @@ class Mysql implements Engine
 		app()->bind(\Techart\SiteSearch\Contract\Indexer::class, Indexer::class);
 	}
 
-	public function search($query)
+	public function search($query, $variant = false)
 	{
-		return $this->queryBuilder()->build($query);
+		return $this->queryBuilder()->build($query, $variant);
 	}
 
 	public function indexer()

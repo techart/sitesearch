@@ -6,6 +6,19 @@ use Illuminate\Database\Eloquent\Collection;
 use TAO\ORM\Model;
 use TAO\Fields\Field;
 
+/**
+ * Trait Searchable
+ *
+ * Примесь к классам моделей, записи (или специальные материалы) которых
+ * требуется находить пользовательским поиском по сайту 
+ *
+ * После подключения примеси к классу модели укажите в свойствах полей модели
+ * параметр searchable со значением true, чтобы их значения участвовали в поиске.
+ *
+ * Поле title по умолчанию участвует в поиске автоматически (см. метод getSearchableTitle()).
+ *
+ * @package Texhart\SiteSearch
+ */
 trait Searchable
 {
 	protected $searchableContentSeparator = ' ';
@@ -20,40 +33,62 @@ trait Searchable
 	/**
 	 * Возвращает url-адрес записи для результатов поиска
 	 *
+	 * Принимает в качестве параметра название варианта контента (языка, региона и т.п.)
+	 *
+	 * @param string $variant
 	 * @return string
 	 */
-	public function getSearchableUrl()
+	public function getSearchableUrl($variant = false)
 	{
 		return $this->url();
 	}
 
 	/**
-	 * Возвращает заголовок записи для осуществления поиска и вывода результатов поиска
+	 * Возвращает заголовок результата поиска
 	 *
+	 * Принимает в качестве параметра название варианта контента (языка, региона и т.п.)
+	 *
+	 * @param string $variant
 	 * @return string
 	 */
-	public function getSearchableTitle()
+	public function getSearchableTitle($variant = false)
 	{
-		return $this->title();
+		$title = $this->getKey();
+		if ($field = $this->field('title')) {
+			if ($variant && $field instanceof \TAO\Fields\MultivariantField) {
+				$title = $field->variantValue($variant);
+			} else {
+				$title = $field->value();
+			}
+		}
+		return $this->prepareSearchableContent($title);
 	}
 
 	/**
-	 * Возвращает контент записи для осуществления поиска и вывода результатов поиска.
+	 * Возвращает контент записи для осуществления поиска и вывода результатов поиска
+	 *
+	 * Принимает в качестве параметра название варианта контента (языка, региона и т.п.)
 	 *
 	 * @return string
 	 */
-	public function getSearchableContent()
+	public function getSearchableContent($variant = false)
 	{
 		$content = '';
 		foreach ($this->getSearchableFields() as $field) {
-			$content .= $field->value() . $this->searchableContentSeparator;
+			if ($variant && $field instanceof \TAO\Fields\MultivariantField) {
+				$value = $field->variantValue($variant);
+			} else {
+				$value = $field->value();
+			}
+			$content .= $value . $this->searchableContentSeparator;
 		}
 		return $this->prepareSearchableContent(rtrim($content, $this->searchableContentSeparator));
 	}
 
 	/**
-	 * Возвращает поля записи, значения которых должны участвовать в поиске. По умолчанию собирает все поля, у которых
-	 * в настройках есть пункт 'searchable' => true.
+	 * Возвращает поля записи, значения которых должны участвовать в поиске
+	 *
+	 * По умолчанию собирает все поля, у которых в настройках есть пункт 'searchable' => true.
 	 *
 	 * @return Field[]
 	 */
@@ -69,19 +104,25 @@ trait Searchable
 	}
 
 	/**
-	 * Возвращает дополнительную информацию о записи. Не участвует в поиске, но может использоваться, например,
-	 * при выводе результатов поиска.
+	 * Возвращает дополнительную информацию о записи
+	 *
+	 * Не участвует в поиске, но может использоваться, например, при выводе результатов поиска.
 	 *
 	 * @return string
 	 */
-	public function getSearchableExtraData()
+	public function getSearchableExtraData($variant = false)
 	{
 		return '';
 	}
 
 	/**
-	 * Обрабатывает контент для приведения его к виду, удобному для использования в поиске (удаление тегов,
-	 * предлогов и тд).
+	 * Подготавливает контент для использования в поиске
+	 *
+	 * Удаляет из контента:
+	 * * HTML-сущности
+	 * * HTML-теги
+	 * * внутреннее содержимое тегов title, noindex, script, style
+	 * * множественные пробелы и переводы строк
 	 *
 	 * @param $content
 	 * @return string
@@ -89,13 +130,18 @@ trait Searchable
 	public function prepareSearchableContent($content)
 	{
 		$content = preg_replace('{&[a-z0-9#]+;}i', ' ', $content);
+		$content = preg_replace('{<title>.+?</title>}ism', '', $content);
 		$content = preg_replace('{<noindex>.+?</noindex>}ism', '', $content);
-		return strip_tags($content);
+		$content = preg_replace('{<script(?:[^>]+)?>.+?</script>}ism', '', $content);
+		$content = preg_replace('{<style(?:[^>]+)?>.+?</style>}ism', '', $content);
+		return trim(preg_replace('{\s+}', ' ', strip_tags($content)));
 	}
 
 	/**
-	 * Если экземлпяр является дататипом, то индексирует все его записи, доступные для этого. Если экзмепляр - запись,
-	 * то индексирует только эту запись.
+	 * Обработка обновления данных
+	 *
+	 * Если экземпляр является типом данных, то индексирует все его записи, доступные для поиска.
+	 * Если экземпляр - отдельная запись, то индексирует только эту запись.
 	 */
 	public function updateSearchIndex()
 	{
@@ -111,8 +157,10 @@ trait Searchable
 	}
 
 	/**
-	 * Если экземлпяр является дататипом, то удаляет из индекса все его записи, доступные для этого.
-	 * Если экзмепляр - запись, то удаляет только эту запись.
+	 * Обработка удаления данных
+	 *
+	 * Если экземпляр является типом данных, то удаляет из индекса все его записи, доступные для поиска.
+	 * Если экземпляр - отдельная запись, то удаляет только эту запись.
 	 */
 	public function deleteFromSearchIndex()
 	{
@@ -127,7 +175,7 @@ trait Searchable
 	}
 
 	/**
-	 * Возвращает используемый движок поиска для управления индексом записей.
+	 * Возвращает используемый движок поиска для управления индексом записей
 	 *
 	 * @return Contract\Engine
 	 */
@@ -137,7 +185,7 @@ trait Searchable
 	}
 
 	/**
-	 * Возвращает список записей текущего типа данных, доступных для поиска.
+	 * Возвращает список записей текущего типа данных, доступных для поиска
 	 *
 	 * @param bool $cacheEnabled
 	 * @return Collection
@@ -152,6 +200,12 @@ trait Searchable
 		}
 	}
 
+	/**
+	 * Возвращает список ID записей текущего типа данных, доступных для поиска
+	 *
+	 * @param bool $cacheEnabled
+	 * @return Collection
+	 */
 	protected function getSearchableItemKeys($cacheEnabled = true)
 	{
 		if ($cacheEnabled && !is_null($this->searchableItemsKeys)) {
@@ -163,7 +217,7 @@ trait Searchable
 	}
 
 	/**
-	 * Проверяет доступна ли запись для поиска
+	 * Проверяет, доступна ли запись для поиска
 	 *
 	 * @return bool
 	 */

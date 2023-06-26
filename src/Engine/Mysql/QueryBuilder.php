@@ -2,6 +2,13 @@
 
 namespace Techart\SiteSearch\Engine\Mysql;
 
+/**
+ * Class QueryBuilder
+ *
+ * Базовый построитель запроса к таблице поиска
+ *
+ * @package Techart\SiteSearch\Engine\Mysql
+ */
 abstract class QueryBuilder
 {
 	/**
@@ -23,10 +30,13 @@ abstract class QueryBuilder
 	 * @param string $query
 	 * @return Builder
 	 */
-	public function build($query)
+	public function build($query, $variant)
 	{
 		$whereRaw = "MATCH({$this->searchableFields()}) AGAINST(? {$this->queryMode()})";
-		return $this->indexItemModel->whereRaw($whereRaw, $this->prepareQuery($query));
+		return $this->indexItemModel
+			->whereRaw($whereRaw, [$this->prepareQuery($query)])
+			->variant($variant)
+		;
 	}
 
 	protected function prepareQuery($query)

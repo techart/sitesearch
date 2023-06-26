@@ -9,6 +9,9 @@ use TAO\ORM\Model;
 
 /**
  * Class IndexItem
+ *
+ * Модель таблицы данных для поиска
+ *
  * @package Techart\SiteSearch\Engine\Mysql\Model
  *
  * @method Builder byModel(Model $model)
@@ -23,47 +26,89 @@ class IndexItem extends Model implements MySqlIndexItem
 	/**
 	 * @param Builder $query
 	 * @param Model $model
-	 *
 	 * @return Builder
 	 */
 	public function scopeByModel($query, $model)
 	{
-		return $query->datatype($model->getDatatype())->where('model_key', $model->getKey());
+		return $query
+			->datatype($model->getDatatype())
+			->where('model_key', $model->getKey())
+		;
 	}
 
+	/**
+	 * @param Builder $query
+	 * @param string $datatypeCode
+	 * @return Builder
+	 */
 	public function scopeDatatype($query, $datatypeCode)
 	{
-		return $query->where('datatype_code', $datatypeCode);
+		return $query
+			->where('datatype_code', $datatypeCode)
+		;
 	}
 
+	/**
+	 * @param Builder $query
+	 * @param bool|string $variant
+	 * @return Builder
+	 */
+	public function scopeVariant($query, $variant)
+	{
+		if (false !== $variant) {
+			return $query->where('variant', $variant);
+		}
+		return $query;
+	}
+
+	/**
+	 * @return array
+	 */
 	public function fields()
 	{
+		$variants = \TAO::getVariants();
+		$variant_items = array_combine(
+			array_keys($variants),
+			array_map(function ($e) { return $e['label'] ?? 'По умолчанию'; }, $variants)
+		);
+
 		return [
+			'variant' => [
+				'label' => 'Вариант контента',
+				'type' => 'select(string32) index',
+				'default' => 'default',
+				'items' => $variant_items,
+			],
 			'title' => [
-				'label' => 'Заголовок',
+				'label' => 'Заголовок материала',
 				'type' => 'string(250) fulltext(title, content)',
 			],
 			'url' => [
-				'label' => 'Url',
+				'label' => 'URL материала',
 				'type' => 'string(250)',
 			],
 			'content' => [
-				'label' => 'Контент',
+				'label' => 'Поисковый контент материала',
 				'type' => 'text(long)',
 			],
 			'extra' => [
-				'label' => 'Дополнительные данные',
+				'label' => 'Дополнительные данные материала',
 				'type' => 'text(long)',
 			],
 			'datatype_code' => [
-				'label' => 'Дататип',
+				'label' => 'Тип данных (модель)',
 				'type' => 'string(50) index(datatype_code, model_key)',
 			],
 			'model_key' => [
-				'label' => 'Дататип',
-				'type' => 'integer',
+				'label' => 'ID записи типа данных',
+				'type' => 'string(36)',
 			],
 		];
+	}
+
+	public function info()
+	{
+		return substr($this->field('extra')->value(), 0, 200);
 	}
 
 	public function description()
