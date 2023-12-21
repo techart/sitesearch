@@ -26,17 +26,28 @@ class Stemmer
 	 * @param Callback|callable $wordProcessCallback
 	 * @return string
 	 */
-	public function process($str, $exceptions = null, $wordProcessCallback = null) {
-		return $this->replaceWordsToStemms($this->normalizeSpaceSymbols($str), $exceptions, $wordProcessCallback);
+	public function process($str, $exceptions = null, $wordProcessCallback = null)
+	{
+		return $this->normalizeSpaceSymbols(
+			$this->replaceWordsToStemms(
+				$this->normalizeSpaceSymbols($str),
+				$exceptions,
+				$wordProcessCallback
+			)
+		);
 	}
 
-	protected function processWord($word, $exceptions = null, $wordProcessCallback = null) {
-		if (!$this->isException($word, $exceptions)) {
-			$stem = $this->service()->stem($word);
-			if (Callback::isValidCallback($wordProcessCallback)) {
-				$stem = Callback::instance($wordProcessCallback)->call($word, $stem);
+	protected function processWord($word, $exceptions = null, $wordProcessCallback = null)
+	{
+		$word = $this->normalizeWord($word);
+		if ($word) {
+			if (!$this->isException($word, $exceptions)) {
+				$stem = $this->service()->stem($word);
+				if (Callback::isValidCallback($wordProcessCallback)) {
+					$stem = Callback::instance($wordProcessCallback)->call($word, $stem);
+				}
+				return $stem;
 			}
-			return $stem;
 		}
 		return $word;
 	}
@@ -85,4 +96,12 @@ class Stemmer
 		}
 		return $res;
 	}
+
+	protected function normalizeWord($word)
+	{
+		$word = trim($word);
+		$word = preg_replace('{[^а-яa-zё0-9]+$}iu', '', $word);
+		return $word;
+	}
+
 }
